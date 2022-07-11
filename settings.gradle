@@ -1,2 +1,2 @@
 rootProject.name = 'spring-authorization-server-demo'
-
+include 'authorization-server'
