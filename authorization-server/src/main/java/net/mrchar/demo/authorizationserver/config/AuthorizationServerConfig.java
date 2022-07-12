@@ -5,6 +5,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import lombok.Setter;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
@@ -89,7 +91,12 @@ public class AuthorizationServerConfig {
 
   private RSAPublicKey publicKey()
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-    byte[] keyBytes = Files.readAllBytes(Paths.get(this.publicKey));
+    String key = Files.readString(Paths.get(this.publicKey), Charset.defaultCharset());
+    String publicKeyPEM =
+        key.replace("-----BEGIN PUBLIC KEY-----", "")
+            .replaceAll(System.lineSeparator(), "")
+            .replace("-----END PUBLIC KEY-----", "");
+    byte[] keyBytes = Base64.decodeBase64(publicKeyPEM);
     X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
     return (RSAPublicKey) keyFactory.generatePublic(spec);
@@ -97,9 +104,14 @@ public class AuthorizationServerConfig {
 
   private RSAPrivateKey privateKey()
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-    byte[] keyBytes = Files.readAllBytes(Paths.get(this.privateKey));
+    String key = Files.readString(Paths.get(this.privateKey), Charset.defaultCharset());
+    String privatePEM =
+        key.replace("-----BEGIN PRIVATE KEY-----", "")
+            .replaceAll(System.lineSeparator(), "")
+            .replace("-----END PRIVATE KEY-----", "");
+    byte[] keyBytes = Base64.decodeBase64(privatePEM);
     PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-    KeyFactory kf = KeyFactory.getInstance("RSA");
-    return (RSAPrivateKey) kf.generatePrivate(spec);
+    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+    return (RSAPrivateKey) keyFactory.generatePrivate(spec);
   }
 }
