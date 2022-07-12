@@ -2,17 +2,19 @@ package net.mrchar.demo.authorizationserver.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.jpa.domain.AbstractPersistable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.Instant;
 
 @Getter
 @Entity
 @Table(name = "`authorization`")
-public class Authorization extends AbstractPersistable<String> {
+public class Authorization {
+  @Setter @Id private String id;
+
   @Setter
   @Column(name = "registered_client_id")
   private String registeredClientId;
@@ -108,9 +110,4 @@ public class Authorization extends AbstractPersistable<String> {
   @Setter
   @Column(name = "oidc_id_token_claims", length = 2000)
   private String oidcIdTokenClaims;
-
-  @Override
-  public void setId(String id) {
-    super.setId(id);
-  }
 }

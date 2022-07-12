@@ -61,7 +61,7 @@ public class AuthorizationServerConfig {
 
   @Bean
   public ProviderSettings providerSettings() {
-    return ProviderSettings.builder().issuer("http://localhost:8080").build();
+    return ProviderSettings.builder().issuer("http://localhost:9000").build();
   }
 
   private RSAPublicKey readPublicKey()

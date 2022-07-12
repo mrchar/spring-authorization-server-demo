@@ -1,4 +1,4 @@
-package net.mrchar.demo.authorizationserver.services;
+package net.mrchar.demo.authorizationserver.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.Module;
@@ -226,7 +226,7 @@ public class JpaOAuth2AuthorizationServiceImpl implements OAuth2AuthorizationSer
 
   private Map<String, Object> parseMap(String data) {
     try {
-      return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {});
+      return this.objectMapper.readValue(data, new TypeReference<>() {});
     } catch (Exception ex) {
       throw new IllegalArgumentException(ex.getMessage(), ex);
     }

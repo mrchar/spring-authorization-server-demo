@@ -1,4 +1,4 @@
-package net.mrchar.demo.authorizationserver.services;
+package net.mrchar.demo.authorizationserver.service;
 
 import net.mrchar.demo.authorizationserver.model.AuthorizationConsent;
 import net.mrchar.demo.authorizationserver.repository.AuthorizationConsentRepository;
