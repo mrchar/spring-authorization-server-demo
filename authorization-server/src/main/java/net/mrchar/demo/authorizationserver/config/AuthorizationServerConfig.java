@@ -5,7 +5,8 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import lombok.Setter;
-import org.apache.tomcat.util.codec.binary.Base64;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemReader;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,10 +25,8 @@ import org.springframework.security.oauth2.server.authorization.config.ProviderS
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
@@ -76,8 +75,8 @@ public class AuthorizationServerConfig {
   public JWKSource<SecurityContext> jwkSource()
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     RSAKey rsaKey =
-        new RSAKey.Builder(publicKey())
-            .privateKey(privateKey())
+        new RSAKey.Builder(readPublicKey())
+            .privateKey(readPrivateKey())
             .keyID(UUID.randomUUID().toString())
             .build();
     JWKSet jwkSet = new JWKSet(rsaKey);
@@ -89,29 +88,31 @@ public class AuthorizationServerConfig {
     return ProviderSettings.builder().issuer("http://localhost:8080").build();
   }
 
-  private RSAPublicKey publicKey()
-      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-    String key = Files.readString(Paths.get(this.publicKey), Charset.defaultCharset());
-    String publicKeyPEM =
-        key.replace("-----BEGIN PUBLIC KEY-----", "")
-            .replaceAll(System.lineSeparator(), "")
-            .replace("-----END PUBLIC KEY-----", "");
-    byte[] keyBytes = Base64.decodeBase64(publicKeyPEM);
-    X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-    return (RSAPublicKey) keyFactory.generatePublic(spec);
+  private RSAPublicKey readPublicKey()
+      throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+    KeyFactory factory = KeyFactory.getInstance("RSA");
+
+    try (FileReader keyReader = new FileReader(this.publicKey);
+        PemReader pemReader = new PemReader(keyReader)) {
+
+      PemObject pemObject = pemReader.readPemObject();
+      byte[] content = pemObject.getContent();
+      X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(content);
+      return (RSAPublicKey) factory.generatePublic(pubKeySpec);
+    }
   }
 
-  private RSAPrivateKey privateKey()
-      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-    String key = Files.readString(Paths.get(this.privateKey), Charset.defaultCharset());
-    String privatePEM =
-        key.replace("-----BEGIN PRIVATE KEY-----", "")
-            .replaceAll(System.lineSeparator(), "")
-            .replace("-----END PRIVATE KEY-----", "");
-    byte[] keyBytes = Base64.decodeBase64(privatePEM);
-    PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-    return (RSAPrivateKey) keyFactory.generatePrivate(spec);
+  private RSAPrivateKey readPrivateKey()
+      throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+    KeyFactory factory = KeyFactory.getInstance("RSA");
+
+    try (FileReader keyReader = new FileReader(this.privateKey);
+        PemReader pemReader = new PemReader(keyReader)) {
+
+      PemObject pemObject = pemReader.readPemObject();
+      byte[] content = pemObject.getContent();
+      PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(content);
+      return (RSAPrivateKey) factory.generatePrivate(privKeySpec);
+    }
   }
 }
